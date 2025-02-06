@@ -1,4 +1,4 @@
-const { ObjectId } = require('mongoose').Types; // Impor ObjectId dari Mongoose
+const { ObjectId } = require('mongoose').Types;
 const Product = require('../models/product');
 
 // createProduct
@@ -52,21 +52,17 @@ const getProductById = async (req, res) => {
 
 // updateProduct
 const updateProduct = async (req, res) => {
-  const { id } = req.params;
-  const { name, price, stock, status } = req.body;
-
-  // Pastikan ID valid
-  if (!ObjectId.isValid(id)) {
-    return res.status(400).json({ message: 'Invalid Product ID' });
-  }
+const { name, price, stock, status } = req.body;
 
   try {
-    const updatedProduct = await Product.findByIdAndUpdate(
-      id,
-      { name, price, stock, status },
-      { new: true }
+    // Update produk di v2 berdasarkan nama, bukan ID
+    const updatedProduct = await Product.findOneAndUpdate(
+      { name }, // Cari berdasarkan nama produk
+      { name, price, stock, status }, // Update dengan data baru
+      { new: true, upsert: true } // Upsert = buat baru jika tidak ada
     );
-    res.json(updatedProduct);
+
+    res.json({ message: 'Product updated in v2', updatedProduct });
   } catch (error) {
     res.status(500).json({ message: 'Server Error', error: error.message });
   }
@@ -74,23 +70,21 @@ const updateProduct = async (req, res) => {
 
 // deleteProduct
 const deleteProduct = async (req, res) => {
-  const { id } = req.params;
-
-  // Pastikan ID valid
-  if (!ObjectId.isValid(id)) {
-    return res.status(400).json({ message: 'Invalid Product ID' });
-  }
+  const { name, price } = req.body;
 
   try {
-    const deletedProduct = await Product.findByIdAndDelete(id);
-    if (!deletedProduct) {
-      return res.status(404).json({ message: 'Product not found' });
+    const result = await Product.findOneAndDelete({ name, price });
+
+    if (!result) {
+      return res.status(404).json({ message: 'Product not found in v2' });
     }
-    res.json({ message: 'Product deleted successfully' });
+
+    res.json({ message: 'Product deleted successfully in v2' });
   } catch (error) {
     res.status(500).json({ message: 'Server Error', error: error.message });
   }
 };
+
 
 module.exports = {
   createProduct,
